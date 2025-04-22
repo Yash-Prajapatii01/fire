@@ -93,7 +93,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
   String? challengeId;
   String? factorId;
   bool rememberDevice = false;
-  final _secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -117,38 +116,37 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<void> _verifyOTP() async {
-  try {
-    // 1️⃣ Verify the OTP challenge
-    await Supabase.instance.client.auth.mfa.verify(
-      factorId: factorId!,
-      challengeId: challengeId!,
-      code: _otpCtrl.text.trim(),
-    );
-
-    // 2️⃣ If "Remember for 30 days" is checked, persist skip‑until per user
-    if (rememberDevice) {
-      final userId = Supabase.instance.client.auth.currentUser!.id;
-      final skipKey = 'mfa_skip_until_$userId';
-      final skipUntil = DateTime.now().add(const Duration(days: 30));
-      await _secureStorage.write(
-        key: skipKey,
-        value: skipUntil.toIso8601String(),
+    try {
+      // 1️⃣ Verify the OTP challenge
+      await Supabase.instance.client.auth.mfa.verify(
+        factorId: factorId!,
+        challengeId: challengeId!,
+        code: _otpCtrl.text.trim(),
       );
+
+      
+      if (rememberDevice) {
+        final userId = Supabase.instance.client.auth.currentUser!.id;
+        final skipUntil = DateTime.now().add(Duration(minutes: 10));
+
+        await Supabase.instance.client.from('mfa_skip').upsert({
+          'user_id': userId,
+          'skip_until': skipUntil.toIso8601String(),
+        });
+      }
+
+      // 3️⃣ Navigate to dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    } catch (e) {
+      print('Verification Error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Verification Error: $e')));
     }
-
-    // 3️⃣ Navigate to dashboard
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const DashboardScreen()),
-    );
-  } catch (e) {
-    print('Verification Error: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Verification Error: $e')),
-    );
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +163,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             CheckboxListTile(
               value: rememberDevice,
               onChanged: (val) => setState(() => rememberDevice = val!),
-              title: const Text('Remember for 30 days'),
+              title: const Text('Remember for 10 minutes'),
             ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _verifyOTP, child: const Text('Verify')),

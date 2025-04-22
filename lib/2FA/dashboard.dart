@@ -24,6 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? errorMessage;
 
   final TextEditingController _otpController = TextEditingController();
+  bool rememberDevice = false;
 
   @override
   void initState() {
@@ -50,6 +51,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  
+
   /// Deletes all unverified TOTP factors for the signed-in user.
   Future<void> unEnrolltheUser() async {
     final supabase = Supabase.instance.client;
@@ -58,8 +61,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final factorId = factors.totp.first.id;
     await supabase.auth.refreshSession();
 
-    final aal_level = await supabase.auth.mfa.getAuthenticatorAssuranceLevel().currentLevel;
-    
+    final aal_level =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel().currentLevel;
+
     print('aal_level: $aal_level.aal2');
 
     if (aal_level != AuthenticatorAssuranceLevels.aal2) {
@@ -132,6 +136,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
 
       if (verifiedSession != null) {
+        // if (rememberDevice) {
+        //   final userId = Supabase.instance.client.auth.currentUser!.id;
+        //   final skipUntil = DateTime.now().add(Duration(minutes: 10));
+
+        //   await Supabase.instance.client.from('mfa_skip').upsert({
+        //     'user_id': userId,
+        //     'skip_until': skipUntil.toIso8601String(),
+        //   });
+        // }
         setState(() {
           is2FAEnabled = true;
           errorMessage = null;
@@ -166,10 +179,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       // 🔁 Step 3: Navigate to login
       if (mounted) {
-        Navigator.pushAndRemoveUntil(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const LoginPage()),
-          (route) => false,
+          // (route) => false,
         );
       }
     } catch (e) {
@@ -274,6 +287,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
+                
                 const SizedBox(height: 24),
                 TextField(
                   controller: _otpController,

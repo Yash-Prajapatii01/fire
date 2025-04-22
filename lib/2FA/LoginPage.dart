@@ -268,20 +268,41 @@ class _LoginPageState extends State<LoginPage> {
       final userId = user.id;
 
       // 2️⃣ Check per‑user MFA skip flag
-      final skipKey = 'mfa_skip_until_$userId';
-      final skipIso = await _secureStorage.read(key: skipKey);
-      if (skipIso != null) {
-        final skipUntil = DateTime.parse(skipIso);
-        if (skipUntil.isAfter(DateTime.now())) {
-          // Still within 30‑day window → skip MFA
+
+      final response =
+          await Supabase.instance.client
+              .from('mfa_skip')
+              .select('skip_until')
+              .eq('user_id', userId)
+              .maybeSingle();
+
+      if (response != null) {
+        final skipUntil = DateTime.parse(response['skip_until']).toString().replaceAll('Z', '');
+        debugPrint('MFA skip valid until: $skipUntil');
+        final skipUntilDateTime = DateTime.parse(skipUntil);
+        if (skipUntilDateTime.isAfter(DateTime.now())) {
+          debugPrint(
+            'MFA skip valid until $skipUntil. Current time: ${DateTime.now()}',
+          );
+          // skip MFA
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const DashboardScreen()),
           );
           return;
+        } else {
+          // expired, clean up
+          try {
+            final deleteResult = await Supabase.instance.client
+                .from('mfa_skip')
+                .delete()
+                .eq('user_id', userId);
+
+            debugPrint('Deleted expired mfa_skip for $userId: $deleteResult');
+          } catch (e) {
+            debugPrint('Error deleting expired mfa_skip: $e');
+          }
         }
-        // delete if the skip date is in the past
-        await _secureStorage.delete(key: skipKey);
       }
 
       // 3️⃣ Clean up any unverified factors, then list factors
@@ -321,7 +342,7 @@ class _LoginPageState extends State<LoginPage> {
       final res = await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
-        data: {"username": "2noob2play"},
+        data: {"username": "2Noob2Code"},
       );
       if (res.user != null) {
         ScaffoldMessenger.of(

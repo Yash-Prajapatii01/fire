@@ -1,5 +1,3 @@
-
-
 import 'package:fire/2FA/LoginPage.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -12,8 +10,6 @@ Future<void> main() async{
   );
   runApp(MyApp());
 }
-        
-        
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -26,3 +22,26 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+// import 'package:fire/2FA/LoginPage.dart';
+// import 'package:fire/no_data/schedule_screen.dart';
+// import 'package:fire/no_data/search_screen.dart';
+// import 'package:fire/no_data/timesheet_screen.dart';
+// import 'package:flutter/material.dart';
+
+// void main() {
+//   runApp(MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Fire',
+//       debugShowCheckedModeBanner: false,
+//       home: ScheduleScreen(),
+//     );
+//   }
+// }

@@ -34,6 +34,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
   }
 
+  
+
   Future<void> _sendOtpToEmail(String email) async {
     await Supabase.instance.client.auth.signInWithOtp(email: email);
     print("OTP sent to $email");
@@ -69,6 +71,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   _checkUserExists(_emailController.text.trim());
+                  // _customFun(_emailController.text.trim());
                 },
                 child: const Text('Send OTP'),
               ),
